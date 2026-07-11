@@ -11,6 +11,7 @@ riftctl search accelerate
 riftctl search "Shadow Isles" --set UNL
 riftctl inspect unl-060a-219
 riftctl inspect UNL-181
+riftctl inspect teemo
 riftctl inspect UNL-181 --no-image
 riftctl inspect UNL-181 --json
 ```
@@ -20,9 +21,11 @@ Riftcodex card payload in SQLite, rebuilds a local FTS5 index, and caches card
 images by default.
 
 `inspect` prints a pretty card summary and, in a TTY, renders cached art via
-Kitty/Sixel/iTerm2/halfblocks. If the image is missing it asks whether to run
-`update-db` (interactive only). Use `--no-image` to skip art, or `--json` for
-the raw API payload. In tmux, enable `allow-passthrough on` for graphics.
+Kitty/Sixel/iTerm2/halfblocks. If the id/ref is missing it searches by name
+and inspects the only match, or prompts you to pick when there are several.
+If the image is missing it asks whether to run `update-db` (interactive only).
+Use `--no-image` to skip art, or `--json` for the raw API payload. In tmux,
+enable `allow-passthrough on` for graphics.
 
 ## Storage
 

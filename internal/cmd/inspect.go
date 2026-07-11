@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -20,8 +21,8 @@ func newInspectCmd() *cobra.Command {
 	var asJSON bool
 	var noImage bool
 	cmd := &cobra.Command{
-		Use:   "inspect <id-or-ref>",
-		Short: "Show one stored card",
+		Use:   "inspect <id-or-ref-or-query>",
+		Short: "Show one stored card (falls back to search)",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			db, err := database.Open(dbPath)
@@ -31,7 +32,7 @@ func newInspectCmd() *cobra.Command {
 			defer db.Close()
 
 			ctx := context.Background()
-			card, err := lookupCard(ctx, db, args[0])
+			card, err := lookupCardOrSearch(ctx, db, args[0])
 			if err != nil {
 				return err
 			}
@@ -144,4 +145,52 @@ func lookupCard(ctx context.Context, db *database.DB, s string) (cards.Card, err
 		return cards.Card{}, err
 	}
 	return db.GetByRef(ctx, ref)
+}
+
+func lookupCardOrSearch(ctx context.Context, db *database.DB, query string) (cards.Card, error) {
+	card, err := lookupCard(ctx, db, query)
+	if err == nil {
+		return card, nil
+	}
+	if err != sql.ErrNoRows {
+		return cards.Card{}, err
+	}
+
+	results, err := db.Search(ctx, query, 20, "")
+	if err != nil {
+		return cards.Card{}, err
+	}
+	switch len(results) {
+	case 0:
+		return cards.Card{}, fmt.Errorf("no card found for %q", query)
+	case 1:
+		return results[0].Card, nil
+	default:
+		return pickSearchResult(query, results)
+	}
+}
+
+func pickSearchResult(query string, results []database.SearchResult) (cards.Card, error) {
+	fmt.Fprintf(os.Stderr, "Multiple matches for %q:\n", query)
+	for i, r := range results {
+		c := r.Card
+		fmt.Fprintf(os.Stderr, "  %d. %s  %s  [%s] %s  %s\n",
+			i+1, c.ID, c.Name, c.SetID, c.Type, strings.Join(c.Domains, ", "))
+	}
+
+	stdinTTY := isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+	if !stdinTTY {
+		return cards.Card{}, fmt.Errorf("multiple matches; specify an id or ref")
+	}
+
+	fmt.Fprintf(os.Stderr, "Choose a card [1-%d]: ", len(results))
+	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		return cards.Card{}, err
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(line))
+	if err != nil || n < 1 || n > len(results) {
+		return cards.Card{}, fmt.Errorf("invalid choice %q", strings.TrimSpace(line))
+	}
+	return results[n-1].Card, nil
 }
