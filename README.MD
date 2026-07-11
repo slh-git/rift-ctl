@@ -1,18 +1,18 @@
-# rift-ctl
+# riftctl
 
 Local Riftbound card data tools powered by the Riftcodex API.
 
 ## Commands
 
 ```bash
-rift-ctl update-db
-rift-ctl update-db --skip-images
-rift-ctl search accelerate
-rift-ctl search "Shadow Isles" --set UNL
-rift-ctl inspect unl-060a-219
-rift-ctl inspect UNL-181
-rift-ctl inspect UNL-181 --no-image
-rift-ctl inspect UNL-181 --json
+riftctl update-db
+riftctl update-db --skip-images
+riftctl search accelerate
+riftctl search "Shadow Isles" --set UNL
+riftctl inspect unl-060a-219
+riftctl inspect UNL-181
+riftctl inspect UNL-181 --no-image
+riftctl inspect UNL-181 --json
 ```
 
 `update-db` is the only command that uses the network. It stores the full

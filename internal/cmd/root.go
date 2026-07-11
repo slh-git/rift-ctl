@@ -19,7 +19,7 @@ func Execute() {
 
 func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rift-ctl",
+		Use:   "riftctl",
 		Short: "Local Riftbound card data tools",
 	}
 	cmd.PersistentFlags().StringVar(&dbPath, "db", database.DefaultPath(), "path to SQLite card database")
