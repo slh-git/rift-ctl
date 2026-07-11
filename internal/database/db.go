@@ -127,10 +127,13 @@ func Open(path string) (*DB, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return nil, err
 	}
-	sqlDB, err := sql.Open("sqlite", path+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)")
+	sqlDB, err := sql.Open("sqlite", path+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)")
 	if err != nil {
 		return nil, err
 	}
+	// SQLite allows one writer; keep a single connection so concurrent
+	// image workers queue instead of racing into SQLITE_BUSY.
+	sqlDB.SetMaxOpenConns(1)
 	db := &DB{sql: sqlDB}
 	if err := db.migrate(); err != nil {
 		sqlDB.Close()

@@ -70,6 +70,7 @@ func Cache(ctx context.Context, db *database.DB, dir string, workers int) (Stats
 		switch {
 		case res.err != nil:
 			stats.Failed++
+			fmt.Fprintf(os.Stderr, "image failed: %s %s: %v\n", res.id, res.url, res.err)
 		case res.downloaded:
 			stats.Downloaded++
 		default:
@@ -83,58 +84,68 @@ func Cache(ctx context.Context, db *database.DB, dir string, workers int) (Stats
 }
 
 type result struct {
+	id         string
+	url        string
 	downloaded bool
 	err        error
 }
 
+func fail(rec database.ImageRecord, err error) result {
+	return result{id: rec.ID, url: rec.ImageURL, err: err}
+}
+
 func cacheOne(ctx context.Context, client *http.Client, db *database.DB, dir string, rec database.ImageRecord) result {
+	if strings.TrimSpace(rec.ImageURL) == "" {
+		return fail(rec, fmt.Errorf("empty image URL"))
+	}
+
 	target := filepath.Join(dir, rec.ID+extension(rec.ImageURL))
 	if rec.ImagePath != "" && fileExists(rec.ImagePath) {
 		return result{}
 	}
 	if fileExists(target) {
 		if err := db.SetImagePath(ctx, rec.ID, target); err != nil {
-			return result{err: err}
+			return fail(rec, err)
 		}
 		return result{}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rec.ImageURL, nil)
 	if err != nil {
-		return result{err: err}
+		return fail(rec, err)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return result{err: err}
+		return fail(rec, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return result{err: fmt.Errorf("%s: %s", rec.ID, resp.Status)}
+		return fail(rec, fmt.Errorf("HTTP %s", resp.Status))
 	}
 
 	tmp := target + ".tmp"
 	f, err := os.Create(tmp)
 	if err != nil {
-		return result{err: err}
+		return fail(rec, err)
 	}
 	_, copyErr := io.Copy(f, resp.Body)
 	closeErr := f.Close()
 	if copyErr != nil {
 		_ = os.Remove(tmp)
-		return result{err: copyErr}
+		return fail(rec, copyErr)
 	}
 	if closeErr != nil {
 		_ = os.Remove(tmp)
-		return result{err: closeErr}
+		return fail(rec, closeErr)
 	}
 	if err := os.Rename(tmp, target); err != nil {
 		_ = os.Remove(tmp)
-		return result{err: err}
+		return fail(rec, err)
 	}
 	if err := db.SetImagePath(ctx, rec.ID, target); err != nil {
-		return result{err: err}
+		return fail(rec, err)
 	}
-	return result{downloaded: true}
+	return result{id: rec.ID, url: rec.ImageURL, downloaded: true}
 }
 
 func extension(rawURL string) string {
