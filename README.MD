@@ -2,6 +2,14 @@
 
 Local Riftbound card data tools powered by the Riftcodex API.
 
+## Install
+
+```bash
+./install.sh
+```
+
+Rebuilds and installs `riftctl` into your Go bin (`GOBIN`, or `GOPATH/bin`).
+
 ## Commands
 
 ```bash
