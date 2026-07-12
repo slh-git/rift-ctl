@@ -156,7 +156,7 @@ func lookupCardOrSearch(ctx context.Context, db *database.DB, query string) (car
 		return cards.Card{}, err
 	}
 
-	results, err := db.Search(ctx, query, 20, "")
+	results, err := db.Search(ctx, database.SearchFilter{Query: query, Limit: 20})
 	if err != nil {
 		return cards.Card{}, err
 	}

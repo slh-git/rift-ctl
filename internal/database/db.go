@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS cards (
 CREATE INDEX IF NOT EXISTS idx_cards_set_num ON cards(set_id, collector_number, variant);
 CREATE INDEX IF NOT EXISTS idx_cards_name ON cards(name COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_cards_clean_name ON cards(clean_name COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_cards_type ON cards(type);
+CREATE INDEX IF NOT EXISTS idx_cards_rarity ON cards(rarity);
+CREATE INDEX IF NOT EXISTS idx_cards_supertype ON cards(supertype);
 
 CREATE TABLE IF NOT EXISTS meta (
 	key TEXT PRIMARY KEY,
@@ -264,42 +267,6 @@ func (db *DB) RebuildSearchIndex(ctx context.Context) error {
 		return err
 	}
 	return tx.Commit()
-}
-
-func (db *DB) Search(ctx context.Context, query string, limit int, setID string) ([]SearchResult, error) {
-	if limit <= 0 {
-		limit = 20
-	}
-	args := []any{ftsQuery(query)}
-	filter := ""
-	if strings.TrimSpace(setID) != "" {
-		filter = " AND upper(c.set_id) = upper(?)"
-		args = append(args, setID)
-	}
-	args = append(args, limit)
-
-	rows, err := db.sql.QueryContext(ctx, `
-		SELECT `+prefixedCardColumns("c")+`, f.rank
-		FROM cards_fts f
-		JOIN cards c ON c.id = f.card_id
-		WHERE cards_fts MATCH ?`+filter+`
-		ORDER BY f.rank
-		LIMIT ?
-	`, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []SearchResult
-	for rows.Next() {
-		c, rank, err := scanSearchResult(rows)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, SearchResult{Card: c, Rank: rank})
-	}
-	return out, rows.Err()
 }
 
 func (db *DB) Count(ctx context.Context) (int, error) {
