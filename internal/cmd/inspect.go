@@ -172,11 +172,7 @@ func lookupCardOrSearch(ctx context.Context, db *database.DB, query string) (car
 
 func pickSearchResult(query string, results []database.SearchResult) (cards.Card, error) {
 	fmt.Fprintf(os.Stderr, "Multiple matches for %q:\n", query)
-	for i, r := range results {
-		c := r.Card
-		fmt.Fprintf(os.Stderr, "  %d. %s  %s  [%s] %s  %s\n",
-			i+1, c.ID, c.Name, c.SetID, c.Type, strings.Join(c.Domains, ", "))
-	}
+	printSearchResults(os.Stderr, results, true)
 
 	stdinTTY := isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
 	if !stdinTTY {

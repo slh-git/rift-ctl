@@ -3,12 +3,15 @@ module github.com/slh/rift-ctl
 go 1.26.4
 
 require (
+	github.com/blacktop/go-termimg v0.1.26
+	github.com/mattn/go-isatty v0.0.22
 	github.com/spf13/cobra v1.10.2
+	golang.org/x/image v0.36.0
+	golang.org/x/term v0.40.0
 	modernc.org/sqlite v1.53.0
 )
 
 require (
-	github.com/blacktop/go-termimg v0.1.26 // indirect
 	github.com/charmbracelet/colorprofile v0.4.1 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
@@ -22,7 +25,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/makeworld-the-better-one/dither/v2 v2.4.0 // indirect
-	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/mattn/go-sixel v0.0.8 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
@@ -32,9 +34,7 @@ require (
 	github.com/soniakeys/quant v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/image v0.36.0 // indirect
 	golang.org/x/sys v0.44.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
 	modernc.org/libc v1.73.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
